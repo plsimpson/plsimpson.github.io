@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phill Simpson — Game Design & Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f0d; --bg2: #161613; --bg3: #1e1e1a;
+    --border: #2a2a26; --border2: #3a3a34;
+    --text: #e8e4d9; --text2: #9e9a8e; --text3: #5e5b52;
+    --accent: #9b3dd6; --accent2: #b96af0;
+    --accent-dim: rgba(155,61,214,0.15); --accent-dim2: rgba(155,61,214,0.07);
+    --teal: #4a8c7e; --teal-dim: rgba(74,140,126,0.1);
+    --green: #5a8c4a;
+    --font-display: 'Syne', sans-serif; --font-mono: 'Space Mono', monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); font-size: 14px; line-height: 1.7; min-height: 100vh; }
+  ::selection { background: var(--accent-dim); color: var(--accent2); }
+  body::before { content: ''; position: fixed; inset: 0; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"); opacity: 0.4; pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; inset: 0; background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px); background-size: 48px 48px; opacity: 0.3; pointer-events: none; z-index: 0; }
+
+  /* NAV */
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 3rem; height: 60px; background: rgba(15,15,13,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  .nav-logo { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--text); text-decoration: none; letter-spacing: -0.5px; cursor: pointer; }
+  .nav-logo span { color: var(--accent); }
+  nav ul { display: flex; gap: 2rem; list-style: none; }
+  nav a { color: var(--text2); text-decoration: none; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; position: relative; cursor: pointer; }
+  nav a::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 1px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform 0.2s; }
+  nav a:hover { color: var(--accent2); } nav a:hover::after { transform: scaleX(1); }
+  nav a.active { color: var(--accent); } nav a.active::after { transform: scaleX(1); }
+
+  /* PAGES */
+  .page { display: none; position: relative; z-index: 1; min-height: 100vh; padding: 100px 0 4rem; }
+  .page.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .scroll-progress { position: fixed; top: 60px; left: 0; height: 2px; background: var(--accent); z-index: 99; transition: width 0.1s linear; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 3rem; }
+
+  /* COMMON */
+  .section-label { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  .section-title { font-family: var(--font-display); font-weight: 700; font-size: 32px; letter-spacing: -1px; color: var(--text); }
+  .divider { width: 100%; height: 1px; background: var(--border); margin: 4rem 0; position: relative; }
+  .divider::before { content: attr(data-label); position: absolute; top: -10px; left: 0; background: var(--bg); padding-right: 16px; font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text3); }
+  .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
+  .btn { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; padding: 12px 28px; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; display: inline-block; }
+  .btn-primary { background: var(--accent); color: var(--bg); font-weight: 700; } .btn-primary:hover { background: var(--accent2); }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text2); } .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  .tag { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 5px 12px; border: 1px solid var(--border2); color: var(--text3); transition: all 0.2s; } .tag:hover { border-color: var(--accent); color: var(--accent); }
+  .pill { font-size: 10px; padding: 3px 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .pill.design { background: var(--accent-dim); color: var(--accent); }
+  .pill.art { background: rgba(90,140,74,0.1); color: var(--green); }
+  .pill.team { background: var(--teal-dim); color: var(--teal); }
+  .link-chip { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 12px; text-decoration: none; border: 1px solid var(--border2); color: var(--text2); transition: all 0.2s; cursor: pointer; }
+  .link-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .link-chip.primary { border-color: var(--accent); color: var(--accent); } .link-chip.primary:hover { background: var(--accent-dim); }
+
+  /* HERO */
+  .hero { padding: 6rem 0 5rem; }
+  .hero-eyebrow { font-size: 12px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; }
+  .hero-name { font-family: var(--font-display); font-weight: 800; font-size: clamp(52px, 8vw, 96px); line-height: 0.95; letter-spacing: -3px; color: var(--text); margin-bottom: 1.5rem; }
+  .hero-name em { font-style: normal; color: var(--accent); }
+  .hero-sub { font-size: 14px; color: var(--text2); max-width: 480px; line-height: 1.8; margin-bottom: 3rem; }
+  .hero-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 3rem; }
+  .hero-cta { display: flex; gap: 1rem; align-items: center; }
+
+  /* GAME CARDS */
+  .games-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .game-card { background: var(--bg2); border: 1px solid var(--border); cursor: pointer; position: relative; overflow: hidden; transition: border-color 0.25s; }
+  .game-card:hover { border-color: var(--border2); }
+  .game-card:hover .game-card-overlay { opacity: 1; }
+  .game-card:hover .game-card-img img { transform: scale(1.04); }
+  .game-card-img { width: 100%; aspect-ratio: 16/9; background: var(--bg3); display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+  .game-card-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; display: block; }
+  .game-card-img .placeholder-icon { font-size: 32px; opacity: 0.15; }
+  .game-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(15,15,13,0.95) 0%, rgba(15,15,13,0.3) 60%, transparent 100%); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.5rem; opacity: 0; transition: opacity 0.3s; }
+  .game-engine-badge { position: absolute; top: 10px; right: 10px; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; padding: 3px 8px; background: rgba(15,15,13,0.85); color: var(--teal); border: 1px solid var(--teal); }
+  .game-card-body { padding: 1.5rem; }
+  .game-card-title { font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--text); margin-bottom: 4px; letter-spacing: -0.5px; }
+  .game-card-meta { display: flex; gap: 0.75rem; margin-bottom: 0.75rem; flex-wrap: wrap; }
+  .game-card-meta span { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+  .game-card-meta .dot { color: var(--border2); }
+  .game-card-desc { font-size: 12px; color: var(--text2); line-height: 1.8; margin-bottom: 1.25rem; }
+  .game-card-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+  .view-details-btn { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); cursor: pointer; transition: color 0.2s; margin-left: auto; } .view-details-btn:hover { color: var(--accent2); }
+
+  /* PROJECT PAGE */
+  .project-back { display: flex; align-items: center; gap: 0.75rem; cursor: pointer; color: var(--text3); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 3rem; transition: color 0.2s; width: fit-content; }
+  .project-back:hover { color: var(--accent); } .project-back::before { content: '←'; font-size: 14px; }
+  .project-hero { margin-bottom: 4rem; }
+  .project-hero-img { width: 100%; aspect-ratio: 21/9; object-fit: cover; display: block; border: 1px solid var(--border); margin-bottom: 2.5rem; }
+  .project-title { font-family: var(--font-display); font-weight: 800; font-size: clamp(36px, 5vw, 64px); line-height: 1; letter-spacing: -2px; color: var(--text); margin-bottom: 1rem; }
+  .project-title em { font-style: italic; color: var(--accent); }
+  .project-tagline { font-size: 14px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.8; max-width: 600px; }
+  .project-meta-row { display: flex; gap: 2px; margin-bottom: 3rem; flex-wrap: wrap; }
+  .project-meta-cell { background: var(--bg2); border: 1px solid var(--border); padding: 1rem 1.5rem; flex: 1; min-width: 120px; }
+  .project-meta-cell .key { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); display: block; margin-bottom: 4px; }
+  .project-meta-cell .val { font-size: 13px; color: var(--text); }
+  .project-section { margin-bottom: 4rem; }
+  .project-section-label { font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+  .project-section-title { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: -0.5px; color: var(--text); margin-bottom: 1.5rem; }
+  .project-section p { font-size: 13px; color: var(--text2); line-height: 2; margin-bottom: 1rem; }
+
+  /* WORK ITEMS */
+  .work-item { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 2px; overflow: hidden; }
+  .work-item-header { padding: 1.5rem 2rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
+  .work-item-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; color: var(--text); margin-bottom: 4px; }
+  .work-item-time { font-size: 11px; color: var(--accent); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; }
+  .work-item-body { padding: 0 2rem 1.5rem; }
+  .work-item-body p { font-size: 13px; color: var(--text2); line-height: 1.9; margin-bottom: 0.75rem; }
+  .work-item-body ul { padding-left: 1.25rem; }
+  .work-item-body ul li { font-size: 12px; color: var(--text2); line-height: 1.9; }
+  .work-item-body ul li::marker { color: var(--accent); }
+  .work-item-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+  .team-credit { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--teal); border: 1px solid var(--teal); padding: 2px 10px; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 0.5rem; }
+  .team-credit::before { content: '↗'; }
+
+  /* GALLERIES */
+  .gallery { display: grid; gap: 2px; margin: 1.5rem 0; }
+  .gallery.cols-2 { grid-template-columns: 1fr 1fr; }
+  .gallery.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .gallery.cols-1 { grid-template-columns: 1fr; }
+  .gallery-item { position: relative; overflow: hidden; border: 1px solid var(--border); background: var(--bg3); }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-item.wide { aspect-ratio: 16/9; }
+  .gallery-caption { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); padding: 6px 10px; background: var(--bg2); border-top: 1px solid var(--border); }
+  .sprite-row { display: flex; gap: 2px; background: var(--bg3); border: 1px solid var(--border); padding: 2rem; justify-content: center; align-items: flex-end; flex-wrap: wrap; margin: 1.5rem 0; }
+  .sprite-row img { height: 220px; width: auto; object-fit: contain; }
+  .weapon-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin: 1.5rem 0; }
+  .weapon-item { background: var(--bg3); border: 1px solid var(--border); padding: 1.5rem; display: flex; flex-direction: column; align-items: flex-end; }
+  .weapon-item img { height: 100px; width: auto; object-fit: contain; }
+  .weapon-label { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-top: 0.75rem; }
+  .two-col-img { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 1.5rem 0; }
+  .two-col-img .img-block { border: 1px solid var(--border); overflow: hidden; background: var(--bg3); }
+  .two-col-img .img-block img { width: 100%; display: block; object-fit: cover; }
+  .map-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 1.5rem 0; }
+  .map-item { border: 1px solid var(--border); background: white; }
+  .map-item img { width: 100%; display: block; }
+  .map-item .gallery-caption { background: var(--bg2); }
+
+  /* CLASSWORK */
+  .classwork-list { display: flex; flex-direction: column; gap: 2px; }
+  .classwork-item { background: var(--bg2); border: 1px solid var(--border); padding: 1.5rem 2rem; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2rem; transition: all 0.2s; }
+  .classwork-item:hover { border-color: var(--border2); background: var(--bg3); }
+  .classwork-course { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .classwork-title { font-family: var(--font-display); font-weight: 600; font-size: 16px; color: var(--text); margin-bottom: 4px; }
+  .classwork-desc { font-size: 12px; color: var(--text2); }
+  .classwork-right { text-align: right; flex-shrink: 0; }
+  .classwork-semester { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+  .classwork-tags { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+  .ctag { font-size: 10px; padding: 2px 8px; letter-spacing: 0.08em; text-transform: uppercase; border: 1px solid var(--border2); color: var(--text3); }
+
+  /* ART GRID */
+  .art-filter-bar { display: flex; gap: 8px; margin-bottom: 2rem; flex-wrap: wrap; }
+  .filter-btn { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; padding: 6px 14px; border: 1px solid var(--border); background: transparent; color: var(--text3); cursor: pointer; transition: all 0.2s; }
+  .filter-btn:hover { border-color: var(--border2); color: var(--text2); } .filter-btn.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .art-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .art-item { background: var(--bg2); border: 1px solid var(--border); aspect-ratio: 1; position: relative; overflow: hidden; cursor: pointer; transition: all 0.25s; }
+  .art-item:hover { border-color: var(--border2); }
+  .art-item-img { width: 100%; height: 100%; background: var(--bg3); display: flex; align-items: center; justify-content: center; }
+  .art-item-img .placeholder-icon { font-size: 28px; opacity: 0.15; }
+  .art-overlay { position: absolute; inset: 0; background: rgba(15,15,13,0.88); display: flex; flex-direction: column; justify-content: flex-end; padding: 1.25rem; opacity: 0; transition: opacity 0.25s; }
+  .art-item:hover .art-overlay { opacity: 1; }
+  .art-type-badge { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+  .art-item-title { font-family: var(--font-display); font-weight: 600; font-size: 14px; color: var(--text); margin-bottom: 6px; }
+  .art-item-desc { font-size: 11px; color: var(--text2); line-height: 1.6; }
+
+  /* ABOUT */
+  .about-grid { display: grid; grid-template-columns: 1fr 380px; gap: 5rem; align-items: start; }
+  .about-text h2 { font-family: var(--font-display); font-weight: 800; font-size: 48px; letter-spacing: -2px; color: var(--text); line-height: 1; margin-bottom: 2rem; }
+  .about-text h2 em { font-style: normal; color: var(--accent); }
+  .about-text p { font-size: 14px; color: var(--text2); line-height: 2; margin-bottom: 1.5rem; }
+  .skills-block { margin-top: 3rem; } .skills-block-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 1rem; }
+  .skills-list { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-tag { font-size: 11px; padding: 5px 12px; border: 1px solid var(--border2); color: var(--text2); letter-spacing: 0.06em; text-transform: uppercase; }
+  .about-sidebar { position: sticky; top: 80px; }
+  .info-card { background: var(--bg2); border: 1px solid var(--border); padding: 1.75rem; margin-bottom: 2px; }
+  .info-card-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); margin-bottom: 1rem; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+  .info-row:last-child { border-bottom: none; } .info-row .key { color: var(--text3); } .info-row .val { color: var(--text); text-align: right; }
+  .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); margin-right: 6px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+  /* CONTACT */
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+  .contact-method { background: var(--bg2); border: 1px solid var(--border); padding: 2rem; text-decoration: none; display: block; transition: all 0.2s; position: relative; overflow: hidden; }
+  .contact-method::before { content: ''; position: absolute; inset: 0; background: var(--accent-dim2); opacity: 0; transition: opacity 0.2s; }
+  .contact-method:hover::before { opacity: 1; } .contact-method:hover { border-color: var(--border2); }
+  .contact-icon { font-size: 24px; color: var(--accent); margin-bottom: 1rem; display: block; }
+  .contact-platform { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+  .contact-handle { font-family: var(--font-display); font-weight: 600; font-size: 18px; color: var(--text); margin-bottom: 0.5rem; }
+  .contact-note { font-size: 12px; color: var(--text2); }
+  .contact-form { background: var(--bg2); border: 1px solid var(--border); padding: 2.5rem; margin-top: 2px; }
+  .form-row { margin-bottom: 1.5rem; }
+  .form-label { display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text3); margin-bottom: 8px; }
+  .form-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-family: var(--font-mono); font-size: 13px; padding: 10px 14px; outline: none; transition: border-color 0.2s; }
+  .form-input:focus { border-color: var(--accent); } .form-input::placeholder { color: var(--text3); }
+  textarea.form-input { resize: vertical; min-height: 120px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .form-note { font-size: 11px; color: var(--text3); margin-top: 1rem; line-height: 1.7; }
+
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 2rem 3rem; display: flex; justify-content: space-between; align-items: center; background: var(--bg); }
+  footer p { font-size: 11px; color: var(--text3); letter-spacing: 0.08em; }
+  footer a, footer span.flink { color: var(--text3); text-decoration: none; transition: color 0.2s; cursor: pointer; } footer a:hover, footer span.flink:hover { color: var(--accent); }
+
+  @media (max-width: 900px) {
+    nav { padding: 0 1.5rem; } nav ul { gap: 1.25rem; }
+    .container { padding: 0 1.5rem; }
+    .games-grid, .about-grid, .contact-grid, .gallery.cols-2, .gallery.cols-3, .weapon-row, .two-col-img, .map-row { grid-template-columns: 1fr; }
+    .about-sidebar { position: static; }
+    .art-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-grid { grid-template-columns: 1fr; }
+    .hero-name { font-size: 48px; letter-spacing: -2px; }
+    .classwork-item { grid-template-columns: 1fr; } .classwork-right { text-align: left; } .classwork-tags { justify-content: flex-start; }
+    footer { flex-direction: column; gap: 0.5rem; text-align: center; }
+    .sprite-row img { height: 140px; }
+    .project-meta-row { flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<nav>
+  <span class="nav-logo" onclick="navigate('home')">PS<span>.</span></span>
+  <ul>
+    <li><a onclick="navigate('home')" data-page="home">Home</a></li>
+    <li><a onclick="navigate('games')" data-page="games">Games</a></li>
+    <li><a onclick="navigate('classwork')" data-page="classwork">Classwork</a></li>
+    <li><a onclick="navigate('art')" data-page="art">Art & Assets</a></li>
+    <li><a onclick="navigate('about')" data-page="about">About & Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ══════ HOME ══════ -->
+<div class="page active" id="page-home">
+  <div class="container">
+    <div class="hero">
+      <p class="hero-eyebrow">// Game Design & Development — Art Pipeline</p>
+      <h1 class="hero-name">Phill<br><em>Simpson</em></h1>
+      <p class="hero-sub">2nd year Game Design & Development student at Quinnipiac University, focused on the art pipeline — 3D modelling, texturing, and bringing visual worlds to life in Unity.</p>
+      <div class="hero-tags">
+        <span class="tag">Maya</span><span class="tag">Substance Painter</span><span class="tag">UV Mapping</span>
+        <span class="tag">Unity</span><span class="tag">Shader Graph</span><span class="tag">3D Modelling</span>
+        <span class="tag">Texturing</span><span class="tag">PBR Pipeline</span>
+      </div>
+      <div class="hero-cta">
+        <span class="btn btn-primary" onclick="navigate('games')">View Games</span>
+        <span class="btn btn-outline" onclick="navigate('about')">Get in Touch</span>
+      </div>
+    </div>
+
+    <div class="divider" data-label="// featured projects"></div>
+    <div class="section-header">
+      <div><p class="section-label">// featured</p><h2 class="section-title">Latest Projects</h2></div>
+      <span class="btn btn-outline" style="font-size:11px;padding:8px 18px;cursor:pointer;" onclick="navigate('games')">All Projects →</span>
+    </div>
+
+    <div class="games-grid">
+      <div class="game-card" onclick="navigate('project-mafia-deli')">
+        <div class="game-card-img">
+          <img src="assets/mafia-deli/sign-exterior.png" alt="Mafia Deli">
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Mafia Deli</h3>
+          <div class="game-card-meta"><span>GDD 211 Final</span><span class="dot">·</span><span>Team (3)</span><span class="dot">·</span><span>Doom-style FPS</span></div>
+          <p class="game-card-desc">Run Tony's Deli by day, survive rival mafia raids by night. A humorous retro FPS blending sandwich-making with old-school gunplay.</p>
+          <div class="game-card-actions">
+            <span class="link-chip primary" onclick="event.stopPropagation()">▶ Play Now</span>
+            <span class="link-chip" onclick="event.stopPropagation()">itch.io</span>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+      <div class="game-card" onclick="navigate('project-interception')">
+        <div class="game-card-img">
+          <div style="width:100%;height:100%;background:var(--bg3);display:flex;align-items:center;justify-content:center;overflow:hidden;">
+            <img src="assets/interception/title-card.png" alt="Project: Interception" style="width:100%;height:100%;object-fit:cover;">
+          </div>
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Project: Interception</h3>
+          <div class="game-card-meta"><span>GDD Course</span><span class="dot">·</span><span>Team</span><span class="dot">·</span><span>Survival Horror</span></div>
+          <p class="game-card-desc">An astronaut is sent to an abandoned space station, but he isn't alone. A map exploration level with collection mechanics and enemy AI pathing.</p>
+          <div class="game-card-actions">
+            <a href="https://llettie67.itch.io/project-interception" target="_blank" class="link-chip primary" onclick="event.stopPropagation()">▶ Play Now</a>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider" data-label="// quick stats" style="margin-top:4rem;"></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:2px;margin-bottom:4rem;">
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;"><p style="font-family:var(--font-display);font-weight:800;font-size:42px;color:var(--accent);letter-spacing:-2px;">4</p><p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-top:4px;">Games Published</p></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;"><p style="font-family:var(--font-display);font-weight:800;font-size:42px;color:var(--accent);letter-spacing:-2px;">2</p><p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-top:4px;">Solo Projects</p></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;"><p style="font-family:var(--font-display);font-weight:800;font-size:42px;color:var(--accent);letter-spacing:-2px;">2</p><p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-top:4px;">Team Projects</p></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;"><p style="font-family:var(--font-display);font-weight:800;font-size:42px;color:var(--accent);letter-spacing:-2px;">6+</p><p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-top:4px;">3D Assets</p></div>
+      <div style="background:var(--bg2);border:1px solid var(--border);padding:2rem;text-align:center;"><p style="font-family:var(--font-display);font-weight:800;font-size:42px;color:var(--accent);letter-spacing:-2px;">2nd</p><p style="font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text3);margin-top:4px;">Year at QU</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ GAMES ══════ -->
+<div class="page" id="page-games">
+  <div class="container">
+    <p class="section-label">// portfolio</p>
+    <h1 class="section-title" style="font-family:var(--font-display);font-weight:800;font-size:48px;letter-spacing:-2px;margin-bottom:3rem;">Published Games</h1>
+    <div class="games-grid">
+
+      <div class="game-card" onclick="navigate('project-mafia-deli')">
+        <div class="game-card-img">
+          <img src="assets/mafia-deli/sign-exterior.png" alt="Mafia Deli">
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Mafia Deli: Leave the Gun, Take the Sandwich</h3>
+          <div class="game-card-meta"><span>2026</span><span class="dot">·</span><span>GDD 211 Final</span><span class="dot">·</span><span>Team (3)</span><span class="dot">·</span><span>Doom-style FPS</span></div>
+          <p class="game-card-desc">A humorous retro FPS set in a New York deli. Make sandwiches, survive mafia raids, and spend your earnings on firepower.</p>
+          <div class="game-card-actions">
+            <span class="link-chip primary" onclick="event.stopPropagation()">▶ Play Now</span>
+            <span class="link-chip" onclick="event.stopPropagation()">itch.io</span>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-card" onclick="navigate('project-horus')">
+        <div class="game-card-img">
+          <img src="assets/horus/gameplay.png" alt="Horus: Vengeance Reborn">
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Horus: Vengeance Reborn</h3>
+          <div class="game-card-meta"><span>Solo</span><span class="dot">·</span><span>Art & Design Final</span><span class="dot">·</span><span>Action Platformer</span></div>
+          <p class="game-card-desc">Play as Horus, the Egyptian deity of the sky, traversing shifting sand dunes and confronting looming dark forces. An art-first vertical slice built around Egyptian iconography and atmospheric design.</p>
+          <div class="game-card-actions">
+            <span class="link-chip" style="color:var(--text3);border-color:var(--border);cursor:default;" onclick="event.stopPropagation()">Portfolio Project</span>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-card" onclick="navigate('project-interception')">
+        <div class="game-card-img">
+          <img src="assets/interception/title-card.png" alt="Project: Interception">
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Project: Interception</h3>
+          <div class="game-card-meta"><span>Team</span><span class="dot">·</span><span>Survival Horror</span><span class="dot">·</span><span>Rated 5★</span></div>
+          <p class="game-card-desc">An astronaut is sent to an abandoned space station, but he isn't alone. A map exploration level with collection mechanics and enemy AI pathing.</p>
+          <div class="game-card-actions">
+            <a href="https://llettie67.itch.io/project-interception" target="_blank" class="link-chip primary" onclick="event.stopPropagation()">▶ Play Now</a>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="game-card" onclick="navigate('project-factory-flip')">
+        <div class="game-card-img">
+          <img src="assets/factory-flip/title-screen.png" alt="Factory Flip">
+          <span class="game-engine-badge">Unity</span>
+          <div class="game-card-overlay"><p style="font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);">Click to view full project →</p></div>
+        </div>
+        <div class="game-card-body">
+          <h3 class="game-card-title">Factory Flip</h3>
+          <div class="game-card-meta"><span>Solo</span><span class="dot">·</span><span>GDD 200 Final</span><span class="dot">·</span><span>One-Button Arcade</span></div>
+          <p class="game-card-desc">A factory worker sorts crates into the correct chutes using a single button. Precision is key — every mistake costs you. Simple concept, art-driven execution.</p>
+          <div class="game-card-actions">
+            <a href="https://mywebspace.quinnipiac.edu/plsimpson/200/pj6/index.html" target="_blank" class="link-chip primary" onclick="event.stopPropagation()">▶ Play in Browser</a>
+            <span class="view-details-btn">View Project Details →</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PROJECT: MAFIA DELI ══════ -->
+<div class="page" id="page-project-mafia-deli">
+  <div class="container">
+
+    <div class="project-back" onclick="navigate('games')">Back to Games</div>
+
+    <div class="project-hero">
+      <img src="assets/mafia-deli/final-interior.png" alt="Mafia Deli — Final Interior" class="project-hero-img">
+      <p class="section-label">// GDD 211 · Spring 2026 · Team Project</p>
+      <h1 class="project-title">Mafia Deli:<br><em>Leave the Gun,<br>Take the Sandwich</em></h1>
+      <p class="project-tagline">A Doom-style FPS set in Tony's Deli — a mafia front sandwiched between bullet casings and Italian subs. Run the deli, build sandwiches, and survive when rival families crash the shop.</p>
+      <div class="project-meta-row">
+        <div class="project-meta-cell"><span class="key">Engine</span><span class="val">Unity</span></div>
+        <div class="project-meta-cell"><span class="key">Course</span><span class="val">GDD 211</span></div>
+        <div class="project-meta-cell"><span class="key">Team Size</span><span class="val">3 people</span></div>
+        <div class="project-meta-cell"><span class="key">My Role</span><span class="val">Art Director</span></div>
+        <div class="project-meta-cell"><span class="key">Platform</span><span class="val">PC (Windows)</span></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <span class="link-chip primary">▶ Play Now</span>
+        <span class="link-chip">itch.io</span>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="project-section">
+      <p class="project-section-label">// overview</p>
+      <p class="project-section-title">The Concept</p>
+      <p>The project started with a single question: <em style="color:var(--text);">"What if a mafia front actually had good business?"</em> From there, the team — myself, Lucas Lettie (writer & director), and Hayden (lead programmer) — built a game that mashes retro FPS combat with point-and-click sandwich building. You run Tony's Deli on the surface, but rival families have other ideas.</p>
+      <p>The game draws inspiration from Papa's Pizzeria for its food-themed charm, Doom for the retro FPS feel, and a distinctly comedic Italian-American visual identity throughout. All art assets were built from scratch by the team.</p>
+      <div class="gallery cols-2" style="margin-top:2rem;">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-interior.png" alt="Final interior"><div class="gallery-caption">Final interior — dining room looking toward the back counter</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-portraits.png" alt="Portrait wall final"><div class="gallery-caption">Final portrait wall — mafia-themed framed photos sourced and edited by Phill</div></div>
+      </div>
+    </div>
+
+    <div class="divider" data-label="// my contributions"></div>
+
+    <!-- 01: INDOOR -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 01 · ~18 hours</p>
+      <p class="project-section-title">Indoor Environment</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Building the Deli Interior</p></div>
+          <span class="work-item-time">~18 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>The interior was built using Unity's <strong style="color:var(--text);">ProBuilder</strong> tool to construct the architectural shell — walls, partitions, the front counter divide, and room layout — following a floor plan I drafted beforehand. Textures were sourced as free assets and applied as Unity Materials, including normal maps and height maps for surface depth.</p>
+          <p>I trialled textures side-by-side using two test structures before committing to the final combination. Once the shell was complete, assets were sourced and placed throughout:</p>
+          <ul>
+            <li>Retro diner booth seating, tables, ceiling fans, kitchen equipment — Unity Asset Store</li>
+            <li>Caution tape, cardboard boxes, dirty toilet — imported for back-of-house atmosphere</li>
+            <li>Food props placed on counters and dining surfaces</li>
+          </ul>
+          <div class="work-item-pills">
+            <span class="pill art">ProBuilder</span><span class="pill art">Unity Materials</span><span class="pill art">Normal Maps</span><span class="pill art">Asset Integration</span><span class="pill design">Environment Design</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-1"><div class="gallery-item wide"><img src="assets/mafia-deli/texture-samples.png" alt="Texture samples"><div class="gallery-caption">Two test structures built to compare sourced textures before applying to the full shop</div></div></div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/early-overview.png" alt="Early overview"><div class="gallery-caption">Early state — top-down overview with textures applied</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/early-interior.png" alt="Early dining room"><div class="gallery-caption">Early interior — dining room with booth seating placed</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/early-kitchen.png" alt="Early kitchen"><div class="gallery-caption">Early back-of-house — kitchen area with counter and food props</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/mid-interior-top.png" alt="Mid interior top view"><div class="gallery-caption">Middle state — interior overview as the room fills out</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/caution-tape.png" alt="Caution tape"><div class="gallery-caption">Caution tape across the back entrance — world-building detail</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/mid-interior-ground.png" alt="Mid interior ground"><div class="gallery-caption">Middle state — ground-level view showing asset density and lighting</div></div>
+      </div>
+      <div class="gallery cols-1"><div class="gallery-item wide"><img src="assets/mafia-deli/final-interior.png" alt="Final interior"><div class="gallery-caption">Final interior — full dining room with portrait wall, fans, booth seating, and polished lighting</div></div></div>
+    </div>
+
+    <!-- 02: PORTRAITS -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 02 · ~1.5 hours</p>
+      <p class="project-section-title">In-Shop Portrait Wall</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div>
+            <p class="work-item-title">Sourcing, Editing & Placing Wall Portraits</p>
+            <span class="team-credit">Lucas Lettie — sourced initial 6 images</span>
+          </div>
+          <span class="work-item-time">~1.5 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>Lucas sourced the initial pool of portrait images. I added 3 more to broaden variety, then edited the full set through color grading, desaturation, vibrancy adjustments, vignette, and pixelation to give them a consistent aged aesthetic that fit the game's tone. The edited images were imported as Sprites and placed across portrait and landscape picture frames around the deli walls.</p>
+          <div class="work-item-pills"><span class="pill art">Image Editing</span><span class="pill art">Sprite Creation</span><span class="pill art">Photopea</span><span class="pill design">Asset Placement</span><span class="pill team">w/ Lucas Lettie</span></div>
+        </div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/mid-portraits-wall.png" alt="Portraits early state"><div class="gallery-caption">Middle state — mafia portrait wall in the early deli scene</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-portraits.png" alt="Portraits final"><div class="gallery-caption">Final state — fully dressed portrait wall with edited, pixelated imagery</div></div>
+      </div>
+    </div>
+
+    <!-- 03: OUTDOOR -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 03 · ~7 hours</p>
+      <p class="project-section-title">Outdoor Environment</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Building the Exterior World</p></div>
+          <span class="work-item-time">~7 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>The outdoor environment establishes the world beyond Tony's Deli — a cracked asphalt lot enclosed by chain-link fencing, with a layered parallax background of a city skyline and suburban treelines stretching into the distance.</p>
+          <ul>
+            <li>Created cityscape and residential silhouette PNGs in Canva; aligned as parallax layers in Unity</li>
+            <li>Added a green fill sprite below the horizon to prevent sky bleeding through background gaps</li>
+            <li>Imported chain-link fence, dirty dumpster (with custom mesh collider to prevent clipping), trees, and procedural skybox from Unity Asset Store</li>
+            <li>Imported free ground textures (grass, sidewalk, asphalt); duplicated and modified the asphalt texture to create a road surface variant; painted terrain maps across the exterior space</li>
+            <li>Custom-modelled and textured the <strong style="color:var(--text);">Tony's Deli neon sign</strong> — my own asset — brought into Unity with a custom <strong style="color:var(--text);">flickering Shader Graph</strong></li>
+          </ul>
+          <div class="work-item-pills"><span class="pill art">Terrain Painting</span><span class="pill art">Asset Integration</span><span class="pill art">Parallax Backgrounds</span><span class="pill art">Custom 3D Asset</span><span class="pill design">Shader Graph</span><span class="pill design">Environment Design</span></div>
+        </div>
+      </div>
+      <div class="two-col-img">
+        <div class="img-block"><img src="assets/mafia-deli/parallax-city.png" alt="City skyline"><div class="gallery-caption" style="border:1px solid var(--border);background:var(--bg2);padding:6px 10px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);">City skyline silhouette — background parallax layer</div></div>
+        <div class="img-block"><img src="assets/mafia-deli/parallax-suburb.png" alt="Suburban parallax"><div class="gallery-caption" style="border:1px solid var(--border);background:var(--bg2);padding:6px 10px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);">Suburban treeline — foreground parallax layer</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/mid-exterior.png" alt="Mid exterior"><div class="gallery-caption">Middle state — building shell with fencing and cracked asphalt</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/mid-exterior-dumpster.png" alt="Dumpster"><div class="gallery-caption">Back exterior — dumpster with custom mesh collider; parallax visible in background</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/sign-exterior.png" alt="Tony's Deli sign"><div class="gallery-caption">Tony's Deli neon sign — custom-modelled asset with flickering Shader Graph</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-sign-angle.png" alt="Sign angle"><div class="gallery-caption">Low-angle view of the sign against the skybox</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-sunset.png" alt="Sunset exterior"><div class="gallery-caption">Final exterior — sunset lighting showing parallax depth</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/final-night.png" alt="Night exterior"><div class="gallery-caption">Final exterior — night skybox with moonlight</div></div>
+      </div>
+    </div>
+
+    <!-- 04: MAPS -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 04 · planning phase</p>
+      <p class="project-section-title">Layout Blueprints</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Drafting Interior & Exterior Floor Plans</p></div>
+          <span class="work-item-time">Planning Phase</span>
+        </div>
+        <div class="work-item-body">
+          <p>Before building anything in Unity, I drafted both the interior floor plan and exterior site layout in Canva. These served as construction references throughout development — not to scale, but clear in their spatial intention. Room functions, half-wall placements, door positions, and exterior zones were all mapped at this stage.</p>
+          <div class="work-item-pills"><span class="pill design">Floor Plan Design</span><span class="pill design">Level Planning</span><span class="pill art">Canva</span></div>
+        </div>
+      </div>
+      <div class="map-row">
+        <div class="map-item"><img src="assets/mafia-deli/map-interior.png" alt="Interior floor plan"><div class="gallery-caption">Interior floor plan — seating area, back of house, deli station, upgrade area</div></div>
+        <div class="map-item"><img src="assets/mafia-deli/map-exterior.png" alt="Exterior site map"><div class="gallery-caption">Exterior site map — fenced lot, dumpster placement, parking, street access</div></div>
+      </div>
+    </div>
+
+    <!-- 05: ENEMIES -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 05 · ~3 hours</p>
+      <p class="project-section-title">Enemy Sprites</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Creating 6 Enemy Character Sprites</p></div>
+          <span class="work-item-time">~3 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>Created 6 total enemy sprites — 3 melee knife-wielding types and 3 ranged gun types — all maintaining a consistent grimy crime aesthetic while having visually distinct silhouettes and outfits. Source images were processed through <strong style="color:var(--text);">Photopea</strong> to remove backgrounds and crop, then pixelated with <strong style="color:var(--text);">Canva's pixelator</strong> to match the game's retro Doom style. Sprites were imported into Unity and placed on the NavMesh as flat billboard characters that rotate to face the player.</p>
+          <div class="work-item-pills"><span class="pill art">Sprite Creation</span><span class="pill art">Photopea</span><span class="pill art">Pixel Art</span><span class="pill design">Character Design</span></div>
+        </div>
+      </div>
+      <div class="sprite-row"><img src="assets/mafia-deli/sprites-ranged.png" alt="Ranged sprites"></div>
+      <div class="gallery-caption" style="border:1px solid var(--border);background:var(--bg2);padding:6px 10px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);">3 ranged enemy types — distinct outfits, gun poses</div>
+      <div class="sprite-row" style="margin-top:2px;"><img src="assets/mafia-deli/sprites-melee.png" alt="Melee sprites"></div>
+      <div class="gallery-caption" style="border:1px solid var(--border);background:var(--bg2);padding:6px 10px;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);">3 melee enemy types — distinct builds, knife poses</div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/mafia-deli/enemies-knife.png" alt="Knife enemies in engine"><div class="gallery-caption">Melee enemies in-engine — billboarding and NavMesh active</div></div>
+        <div class="gallery-item wide"><img src="assets/mafia-deli/enemies-gun.png" alt="Gun enemies in engine"><div class="gallery-caption">Ranged enemies in the exterior play space</div></div>
+      </div>
+    </div>
+
+    <!-- 06: WEAPONS -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 06 · ~2 hours</p>
+      <p class="project-section-title">Weapon UI Sprites</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">POV Weapon Sprites — Tommy Gun, Revolver, Shotgun</p></div>
+          <span class="work-item-time">~2 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>Created three first-person POV weapon sprites — a Tommy Gun, Revolver, and Shotgun — each pixelated to match the game's visual style. Imported into Unity's Canvas UI and aligned with each weapon's in-scene bullet origin so bullets appear to come from the correct barrel position from the player's perspective.</p>
+          <div class="work-item-pills"><span class="pill art">Sprite Creation</span><span class="pill art">Pixel Art</span><span class="pill design">UI Canvas</span><span class="pill design">Unity Integration</span></div>
+        </div>
+      </div>
+      <div class="weapon-row">
+        <div class="weapon-item"><img src="assets/mafia-deli/gun-tommy.png" alt="Tommy Gun"><span class="weapon-label">Tommy Gun</span></div>
+        <div class="weapon-item"><img src="assets/mafia-deli/gun-revolver.png" alt="Revolver"><span class="weapon-label">Revolver</span></div>
+        <div class="weapon-item"><img src="assets/mafia-deli/gun-shotgun.png" alt="Shotgun"><span class="weapon-label">Shotgun</span></div>
+      </div>
+    </div>
+
+    <!-- 07: SOUND -->
+    <div class="project-section">
+      <p class="project-section-label">// contribution 07 · ~3 hours</p>
+      <p class="project-section-title">Sound Implementation</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div>
+            <p class="work-item-title">Audio Chopping, Looping & Scene Setup</p>
+            <span class="team-credit">Lucas Lettie — sourced all music & sound effects</span>
+          </div>
+          <span class="work-item-time">~3 hrs</span>
+        </div>
+        <div class="work-item-body">
+          <p>Lucas handled sourcing the game's music and sound effects. My role was implementation — taking those raw audio assets and wiring them into the game properly.</p>
+          <ul>
+            <li>Manually chopped a royalty-free splat sound asset into 8 distinct variation files to avoid repetition</li>
+            <li>Added a code insert to the deli/tutorial script to play a random splat variant whenever an ingredient is placed</li>
+            <li>Set up looping AudioSource game objects for background music across both the deli scene and the fight scene</li>
+            <li>Readjusted audio players to loop correctly during longer gameplay sessions without cutting out mid-track</li>
+          </ul>
+          <div class="work-item-pills"><span class="pill art">Audio Editing</span><span class="pill design">Unity AudioSource</span><span class="pill design">Scene Setup</span><span class="pill team">w/ Lucas Lettie</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEAM -->
+    <div class="divider" data-label="// full team"></div>
+    <div class="project-section">
+      <p class="project-section-label">// credits</p>
+      <p class="project-section-title">The Team</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-top:1.5rem;">
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:1.75rem;">
+          <p style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--accent);margin-bottom:4px;">Phill Simpson</p>
+          <p style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Art Director</p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;">Indoor & outdoor environments, enemy sprites, weapon sprites, portrait wall, parallax backgrounds, Tony's Deli neon sign, sound implementation.</p>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:1.75rem;">
+          <p style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--teal);margin-bottom:4px;">Lucas Lettie</p>
+          <p style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Writer & Director</p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;">Game concept, dialogue & tutorial writing, portrait image sourcing, music & sound effect sourcing, start screen, UI direction.</p>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:1.75rem;">
+          <p style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--teal);margin-bottom:4px;">Hayden</p>
+          <p style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Lead Programmer</p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;">Line-trace shooting, enemy NavMesh & feedback loop, sandwich builder scripting, scene transitions, cursor lock, weapon loadout system.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════ CLASSWORK ══════ -->
+<div class="page" id="page-classwork">
+  <div class="container">
+    <p class="section-label">// quinnipiac university</p>
+    <h1 class="section-title" style="font-family:var(--font-display);font-weight:800;font-size:48px;letter-spacing:-2px;margin-bottom:0.75rem;">Classwork</h1>
+    <p style="font-size:13px;color:var(--text2);max-width:520px;margin-bottom:3rem;line-height:1.8;">Assignments and projects submitted for my Game Design & Development major. At QU, coursework is the primary submission format — these represent graded, reviewed work.</p>
+    <div class="classwork-list">
+      <div class="classwork-item" onclick="navigate('project-gdd202')" style="cursor:pointer;">
+        <div>
+          <p class="classwork-course">GDD 202 — 3D Modelling & Texturing</p>
+          <p class="classwork-title">It's A Small World — Full 3D Art Pipeline Scene</p>
+          <p class="classwork-desc">A tinkerer's workbench scene where the tinkerer is a bug. 4 original assets modelled in Maya, UV unwrapped, textured in Substance Painter with full PBR maps, and assembled in Unity with custom Shader Graphs.</p>
+        </div>
+        <div class="classwork-right">
+          <p class="classwork-semester">Spring 2026</p>
+          <div class="classwork-tags"><span class="ctag">Maya</span><span class="ctag">Substance</span><span class="ctag">UV</span><span class="ctag">Shader Graph</span><span class="ctag">Unity</span></div>
+        </div>
+      </div>
+      <div class="classwork-item"><div><p class="classwork-course">GDD 201 — Intro to Game Design</p><p class="classwork-title">Assignment Title Here</p><p class="classwork-desc">Brief description of what this assignment was about.</p></div><div class="classwork-right"><p class="classwork-semester">Fall 2023</p><div class="classwork-tags"><span class="ctag">Unity</span></div></div></div>
+      <div class="classwork-item"><div><p class="classwork-course">GDD 210 — 3D Modelling I</p><p class="classwork-title">Hard Surface Modelling Project</p><p class="classwork-desc">Modelled a [object] in Maya with full UV unwrap and baked textures in Substance Painter.</p></div><div class="classwork-right"><p class="classwork-semester">Fall 2023</p><div class="classwork-tags"><span class="ctag">Maya</span><span class="ctag">UV</span><span class="ctag">Substance</span></div></div></div>
+      <div class="classwork-item"><div><p class="classwork-course">GDD 220 — Level Design</p><p class="classwork-title">Environment Blockout & Final Level</p><p class="classwork-desc">Designed and greyboxed a complete playable level in Unity, then finished with custom assets.</p></div><div class="classwork-right"><p class="classwork-semester">Spring 2024</p><div class="classwork-tags"><span class="ctag">Unity</span><span class="ctag">Level Design</span></div></div></div>
+      <div class="classwork-item"><div><p class="classwork-course">GDD 250 — Visual Systems</p><p class="classwork-title">Shader Graph — [Effect Name]</p><p class="classwork-desc">Built a custom shader in Unity's Shader Graph — node-based visual workflow, no raw code.</p></div><div class="classwork-right"><p class="classwork-semester">Spring 2024</p><div class="classwork-tags"><span class="ctag">Unity</span><span class="ctag">Shader Graph</span></div></div></div>
+      <div class="classwork-item"><div><p class="classwork-course">ART 180 — Digital Art Foundations</p><p class="classwork-title">Concept Art Series</p><p class="classwork-desc">A series of environment concepts and character silhouette explorations for an original game IP.</p></div><div class="classwork-right"><p class="classwork-semester">Fall 2023</p><div class="classwork-tags"><span class="ctag">Photoshop</span><span class="ctag">Concept Art</span></div></div></div>
+    </div>
+    <div style="margin-top:3rem;padding:2rem;background:var(--bg2);border:1px solid var(--border);border-left:3px solid var(--accent);">
+      <p style="font-size:12px;color:var(--text2);line-height:1.9;"><span style="color:var(--accent);font-size:10px;letter-spacing:0.2em;text-transform:uppercase;">// Note</span><br>These are selected works submitted as coursework at Quinnipiac University's School of Computing. Submission links may be gated behind course portals — reach out directly if you'd like to see a specific piece.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ ART & ASSETS ══════ -->
+<div class="page" id="page-art">
+  <div class="container">
+    <p class="section-label">// 3D art & assets</p>
+    <h1 class="section-title" style="font-family:var(--font-display);font-weight:800;font-size:48px;letter-spacing:-2px;margin-bottom:3rem;">Art & Assets</h1>
+    <div class="art-filter-bar">
+      <button class="filter-btn active" onclick="filterArt('all', this)">All</button>
+      <button class="filter-btn" onclick="filterArt('model', this)">3D Models</button>
+      <button class="filter-btn" onclick="filterArt('render', this)">Renders</button>
+      <button class="filter-btn" onclick="filterArt('uv', this)">UV Maps</button>
+      <button class="filter-btn" onclick="filterArt('texture', this)">Textures</button>
+      <button class="filter-btn" onclick="filterArt('concept', this)">Concept Art</button>
+    </div>
+    <div class="art-grid" id="artGrid">
+      <div class="art-item" data-type="render" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-final-render.png" alt="Final render" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">Final Render</p><p class="art-item-title">It's A Small World</p><p class="art-item-desc">GDD 202 Final · Full scene render · Unity</p></div>
+      </div>
+      <div class="art-item" data-type="model" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-modelling.png" alt="Modelling process" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">3D Models</p><p class="art-item-title">4-Asset Set — Maya</p><p class="art-item-desc">Lantern Lamp · Wrench · Battery · Workbench</p></div>
+      </div>
+      <div class="art-item" data-type="uv" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-uvs.png" alt="UV maps" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">UV Maps</p><p class="art-item-title">Hero Asset UV Layout</p><p class="art-item-desc">Maya UV Editor · Per-part unwrap</p></div>
+      </div>
+      <div class="art-item" data-type="texture" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-textures.png" alt="Texture maps" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">Texture Maps</p><p class="art-item-title">Hero Asset Textures</p><p class="art-item-desc">Substance Painter · PBR Metal-Roughness · Alpha</p></div>
+      </div>
+      <div class="art-item" data-type="render" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-imports.png" alt="Unity imports" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">Unity Imports</p><p class="art-item-title">All 4 Assets In-Engine</p><p class="art-item-desc">Initial Unity import with PBR materials</p></div>
+      </div>
+      <div class="art-item" data-type="render" onclick="navigate('project-gdd202')">
+        <div class="art-item-img"><img src="assets/gdd202/slide-shaders.png" alt="Shader graphs" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div class="art-overlay"><p class="art-type-badge">Shader Graph</p><p class="art-item-title">Custom Shader Graphs</p><p class="art-item-desc">Wobble distortion · Transparent emission</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ ABOUT & CONTACT ══════ -->
+<div class="page" id="page-about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-text">
+        <p class="section-label">// who i am</p>
+        <h2>I make<br>games <em>&amp;</em><br>worlds.</h2>
+        <p>I grew up playing video games, starting with my first Wii console when I was around 4 years old — and I haven't stopped since. I've always wanted to create my own video games, and here I am, making games and making my younger self proud.</p>
+        <p>I study Game Design & Development at Quinnipiac University, specialising in the art pipeline. My focus is on 3D modelling, UV mapping, and texturing assets that end up in-engine — and in my free time I picked up a bit of digital design to make graphics and other creative work.</p>
+        <p>Outside of game development, I'm the VP of Administration for the Eta Sigma chapter of Beta Theta Pi at Quinnipiac — the first member of our chapter to study Game Design. In that role I oversee our chapter's social media presence, including photography and digital design for our Instagram promotional graphics.</p>
+        <p>Currently looking for internships, collaborators, and game jam teams as I continue building out my portfolio through my degree.</p>
+        <div class="skills-block">
+          <p class="skills-block-label">// tools & tech</p>
+          <div class="skills-list">
+            <span class="skill-tag">Maya</span><span class="skill-tag">Substance Painter</span><span class="skill-tag">UV Mapping</span>
+            <span class="skill-tag">PBR Texturing</span><span class="skill-tag">Unity</span><span class="skill-tag">Shader Graph</span>
+            <span class="skill-tag">3D Modelling</span><span class="skill-tag">Asset Integration</span><span class="skill-tag">Photoshop</span>
+            <span class="skill-tag">Digital Design</span><span class="skill-tag">Photography</span><span class="skill-tag">Canva</span>
+          </div>
+        </div>
+      </div>
+      <div class="about-sidebar">
+        <div class="info-card">
+          <p class="info-card-label">// quick info</p>
+          <div class="info-row"><span class="key">School</span><span class="val">Quinnipiac Univ.</span></div>
+          <div class="info-row"><span class="key">Major</span><span class="val">Game Design & Dev</span></div>
+          <div class="info-row"><span class="key">Pipeline</span><span class="val">Art Pipeline</span></div>
+          <div class="info-row"><span class="key">Year</span><span class="val">2nd Year</span></div>
+          <div class="info-row"><span class="key">Fraternity</span><span class="val">Beta Theta Pi</span></div>
+          <div class="info-row"><span class="key">Location</span><span class="val">Connecticut, USA</span></div>
+          <div class="info-row"><span class="key">Status</span><span class="val"><span class="status-dot"></span>Open to opps.</span></div>
+        </div>
+        <div class="info-card">
+          <p class="info-card-label">// contact</p>
+          <div class="info-row"><span class="key">Email</span><span class="val" style="color:var(--accent);font-size:11px;">plsim.business@gmail.com</span></div>
+          <div class="info-row"><span class="key">itch.io</span><span class="val" style="color:var(--teal);font-size:11px;">bongueese.itch.io</span></div>
+          <div class="info-row"><span class="key">LinkedIn</span><span class="val" style="color:var(--teal);font-size:11px;">in/bongueese</span></div>
+          <div class="info-row"><span class="key">GitHub</span><span class="val" style="color:var(--teal);font-size:11px;">github.com/bongueese</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider" data-label="// contact" style="margin-top:5rem;"></div>
+    <div style="margin-bottom:2.5rem;"><p class="section-label">// get in touch</p><h2 class="section-title">Let's Talk</h2></div>
+
+    <div class="contact-grid" style="margin-bottom:2px;">
+      <a href="mailto:plsim.business@gmail.com" class="contact-method"><span class="contact-icon">✉</span><p class="contact-platform">Email</p><p class="contact-handle">plsim.business@gmail.com</p><p class="contact-note">Best for serious inquiries, collabs, and freelance.</p></a>
+      <a href="https://bongueese.itch.io" target="_blank" class="contact-method"><span class="contact-icon">⬡</span><p class="contact-platform">itch.io</p><p class="contact-handle">bongueese.itch.io</p><p class="contact-note">Play my games and leave comments or ratings there too.</p></a>
+      <a href="https://linkedin.com/in/bongueese" target="_blank" class="contact-method"><span class="contact-icon">◫</span><p class="contact-platform">LinkedIn</p><p class="contact-handle">in/bongueese</p><p class="contact-note">Professional network, internship & job inquiries.</p></a>
+      <a href="https://github.com/bongueese" target="_blank" class="contact-method"><span class="contact-icon">◈</span><p class="contact-platform">GitHub</p><p class="contact-handle">github.com/bongueese</p><p class="contact-note">Open source projects, code samples, contributions.</p></a>
+    </div>
+
+    <div class="contact-form">
+      <p class="section-label" style="margin-bottom:1.5rem;">// or send a message directly</p>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Name</label><input type="text" class="form-input" placeholder="Your name"></div>
+        <div class="form-row"><label class="form-label">Email</label><input type="email" class="form-input" placeholder="your@email.com"></div>
+      </div>
+      <div class="form-row"><label class="form-label">Subject</label><input type="text" class="form-input" placeholder="What's this about?"></div>
+      <div class="form-row"><label class="form-label">Message</label><textarea class="form-input" placeholder="Say something..."></textarea></div>
+      <button class="btn btn-primary" onclick="handleFormSubmit(this)">Send Message</button>
+      <p class="form-note">// Wire this up with <a href="https://formspree.io" style="color:var(--accent);text-decoration:none;">Formspree</a> or <a href="https://emailjs.com" style="color:var(--accent);text-decoration:none;">EmailJS</a> for free, no-backend email delivery.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PROJECT: INTERCEPTION ══════ -->
+<div class="page" id="page-project-interception">
+  <div class="container">
+    <div class="project-back" onclick="navigate('games')">Back to Games</div>
+    <div class="project-hero">
+      <img src="assets/interception/title-card.png" alt="Project: Interception" class="project-hero-img">
+      <p class="section-label">// Survival Horror · Team Project · Windows</p>
+      <h1 class="project-title"><em>Project:</em><br>Interception</h1>
+      <p class="project-tagline">An astronaut is sent to an abandoned space station to assess the damage — but he isn't alone. A map exploration level with journal-based collection mechanics and enemy AI pathing, built in Unity by Team: The Blakening.</p>
+      <div class="project-meta-row">
+        <div class="project-meta-cell"><span class="key">Engine</span><span class="val">Unity</span></div>
+        <div class="project-meta-cell"><span class="key">Team</span><span class="val">The Blakening</span></div>
+        <div class="project-meta-cell"><span class="key">Genre</span><span class="val">Survival Horror</span></div>
+        <div class="project-meta-cell"><span class="key">My Role</span><span class="val">Environment Design</span></div>
+        <div class="project-meta-cell"><span class="key">Rating</span><span class="val">★★★★★ (5.0)</span></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <a href="https://llettie67.itch.io/project-interception" target="_blank" class="link-chip primary">▶ Play on itch.io</a>
+      </div>
+    </div>
+
+    <div class="project-section">
+      <p class="project-section-label">// overview</p>
+      <p class="project-section-title">The Mission</p>
+      <p>Five days ago, radio and surveillance connections were lost with the USS Centurion, a state-of-the-art satellite station. You're sent on a recon mission — equipped with a camera, a flashlight, and a journal to log any issues you find. A cosmic storm is closing in. For all intents and purposes, you'll be on your own.</p>
+      <p>The game is a tense, atmospheric exploration experience. Co-created with Lucas Lettie, with myself handling the environment design and level layout throughout development.</p>
+    </div>
+
+    <div class="divider" data-label="// my contributions"></div>
+
+    <div class="project-section">
+      <p class="project-section-label">// contribution · environment design</p>
+      <p class="project-section-title">Building the Space Station</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Greyboxing & Level Layout</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>I was responsible for building and designing the environment for the game — drafting up a greyboxed version of the space station until we landed on a layout everyone was happy with. The interconnected floorplan of the station took the most iteration; getting the room relationships right was critical to the game's sense of exploration and tension.</p>
+          <p>Once the greybox was approved, the real challenge began: taking the unscaled whitebox geometry and building out proper interior detail — walls, corners, ceiling trims, and floor panels — while reconciling the scale mismatch between the greybox and the imported interior structure models.</p>
+          <p>Finally, I dressed the space with props, clutter, and furniture — both organised and disorganised — to make the station feel lived-in, as if people were once there but are no longer.</p>
+          <div class="work-item-pills">
+            <span class="pill design">Level Design</span><span class="pill design">Greyboxing</span><span class="pill art">Environment Dressing</span><span class="pill art">Asset Integration</span><span class="pill art">Unity ProBuilder</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/interception/early-greybox.png" alt="Early greybox"><div class="gallery-caption">Early state — initial greybox layout of the docking bay section</div></div>
+        <div class="gallery-item wide"><img src="assets/interception/full-greybox.png" alt="Full greybox"><div class="gallery-caption">Full greybox — complete station layout with all rooms blocked out</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/interception/textured-exterior.png" alt="Textured exterior view"><div class="gallery-caption">Textured build — station exterior with modular sci-fi panelling applied</div></div>
+        <div class="gallery-item wide"><img src="assets/interception/textured-hallway.png" alt="Textured hallway"><div class="gallery-caption">Interior hallway — final textures and modular wall/floor construction</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/interception/mid-cafeteria.png" alt="Cafeteria room"><div class="gallery-caption">Cafeteria — prop dressing with tables, benches, and environmental clutter</div></div>
+        <div class="gallery-item wide"><img src="assets/interception/prop-dressing.png" alt="Prop dressing detail"><div class="gallery-caption">Living quarters — tablet prop placement and room dressing detail</div></div>
+      </div>
+      <div class="gallery cols-2">
+        <div class="gallery-item wide"><img src="assets/interception/final-redcorridor.png" alt="Red corridor in-game"><div class="gallery-caption">Final in-game — alarm lighting in the corridor, atmospheric tension</div></div>
+        <div class="gallery-item wide"><img src="assets/interception/final-journal-hallway.png" alt="Journal hallway in-game"><div class="gallery-caption">Final in-game — hallway with journal collectible and flashlight gameplay</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-top:1.5rem;">
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:1.75rem;">
+          <p style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--accent);margin-bottom:4px;">Phill Simpson</p>
+          <p style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Environment Design</p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;">Level layout, greyboxing, interior construction, prop dressing, and environmental storytelling.</p>
+        </div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:1.75rem;">
+          <p style="font-family:var(--font-display);font-weight:700;font-size:18px;color:var(--teal);margin-bottom:4px;">Lucas Lettie</p>
+          <p style="font-size:10px;letter-spacing:0.18em;text-transform:uppercase;color:var(--text3);margin-bottom:1rem;">Programming & Direction</p>
+          <p style="font-size:12px;color:var(--text2);line-height:1.8;">Enemy AI, journal collection system, game logic, and overall project direction.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PROJECT: HORUS ══════ -->
+<div class="page" id="page-project-horus">
+  <div class="container">
+    <div class="project-back" onclick="navigate('games')">Back to Games</div>
+    <div class="project-hero">
+      <img src="assets/horus/gameplay.png" alt="Horus: Vengeance Reborn gameplay" class="project-hero-img">
+      <p class="section-label">// Solo Project · Art & Design Final · Action Platformer</p>
+      <h1 class="project-title">Horus:<br><em>Vengeance Reborn</em></h1>
+      <p class="project-tagline">A vertical slice gameplay and art demo placing players in the role of Horus, the Egyptian deity of the sky, as he traverses shifting sand dunes and confronts looming dark forces. An art-first project built around Egyptian iconography, atmospheric lighting, and intricate character design.</p>
+      <div class="project-meta-row">
+        <div class="project-meta-cell"><span class="key">Engine</span><span class="val">Unity</span></div>
+        <div class="project-meta-cell"><span class="key">Type</span><span class="val">Solo</span></div>
+        <div class="project-meta-cell"><span class="key">Focus</span><span class="val">Art Direction</span></div>
+        <div class="project-meta-cell"><span class="key">Genre</span><span class="val">Action Platformer</span></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <span class="link-chip" style="color:var(--text3);border-color:var(--border);">Portfolio Project — No Public Build</span>
+      </div>
+    </div>
+
+    <div class="project-section">
+      <p class="project-section-label">// overview</p>
+      <p class="project-section-title">An Art-First Vertical Slice</p>
+      <p>Horus: Vengeance Reborn was a solo final project built around art direction above all else. The gameplay is intentionally minimal — a functional vertical slice that gives context to the visual world — but the art carries the experience. Every environment, character, and effect draws from Egyptian mythology, blending stylized iconography with atmospheric lighting to craft something that feels both ancient and alive.</p>
+      <p>The project experiments with mechanics that blend mythological storytelling and interactive design, featuring dynamic traversal across desert landscapes and combat encounters inspired by ancient lore. The result bridges history and fantasy through a strong, consistent visual identity.</p>
+    </div>
+
+    <div class="divider" data-label="// my contributions"></div>
+
+    <div class="project-section">
+      <p class="project-section-label">// contributions · solo project</p>
+      <p class="project-section-title">Art Direction & Environment</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Full Art Direction — Solo</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>As a solo project, every visual element was my own work — environment design and dressing, character art, lighting, atmospheric effects, and overall visual direction. The project prioritises art fidelity over mechanical complexity, demonstrating what can be achieved when the pipeline is focused entirely on visual storytelling.</p>
+          <div class="work-item-pills">
+            <span class="pill art">Environment Art</span><span class="pill art">Character Design</span><span class="pill art">Lighting</span><span class="pill art">Atmospheric Effects</span><span class="pill design">Art Direction</span><span class="pill design">Level Design</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/horus/title-screen.png" alt="Horus title screen"><div class="gallery-caption">Title screen — custom UI design with Egyptian iconography throughout</div></div>
+        <div class="gallery-item wide"><img src="assets/horus/gameplay.png" alt="Horus gameplay"><div class="gallery-caption">In-game — stylized 3D environments with dramatic atmospheric lighting and enemy encounters</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PROJECT: FACTORY FLIP ══════ -->
+<div class="page" id="page-project-factory-flip">
+  <div class="container">
+    <div class="project-back" onclick="navigate('games')">Back to Games</div>
+    <div class="project-hero">
+      <img src="assets/factory-flip/gameplay-1.png" alt="Factory Flip gameplay" class="project-hero-img">
+      <p class="section-label">// Solo Project · GDD 200 Final · One-Button Arcade</p>
+      <h1 class="project-title"><em>Factory</em><br>Flip</h1>
+      <p class="project-tagline">A factory worker sorts crates into the correct chutes using a single button. Precision is key — every mistake reduces your score, challenging you to balance speed and accuracy. A proof-of-concept that leans heavily on art to carry its simple mechanical premise.</p>
+      <div class="project-meta-row">
+        <div class="project-meta-cell"><span class="key">Engine</span><span class="val">Unity (WebGL)</span></div>
+        <div class="project-meta-cell"><span class="key">Course</span><span class="val">GDD 200 Final</span></div>
+        <div class="project-meta-cell"><span class="key">Type</span><span class="val">Solo</span></div>
+        <div class="project-meta-cell"><span class="key">Genre</span><span class="val">One-Button Arcade</span></div>
+      </div>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <a href="https://mywebspace.quinnipiac.edu/plsimpson/200/pj6/index.html" target="_blank" class="link-chip primary">▶ Play in Browser</a>
+      </div>
+    </div>
+
+    <div class="project-section">
+      <p class="project-section-label">// overview</p>
+      <p class="project-section-title">Simple Mechanics, Art-Driven Execution</p>
+      <p>Factory Flip was a GDD 200 final project designed as a proof-of-concept: could I build a fully functional, playable game with a single button input? The answer is yes — but more importantly, it's a demonstration that even a mechanically minimal game benefits enormously from strong visual direction.</p>
+      <p>The code handles the core loop — a conveyor belt, crate sorting, scoring — but the art gives it personality. The factory setting, visual feedback, and overall aesthetic were all deliberate choices to make a one-button game feel like it has a world behind it.</p>
+    </div>
+
+    <div class="divider" data-label="// my contributions"></div>
+
+    <div class="project-section">
+      <p class="project-section-label">// contributions · solo project</p>
+      <p class="project-section-title">Code, Art & Design</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Full Solo Build — Mechanics, Art & Level</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>Built entirely solo. The coding side handles the full game loop — single-button input, conveyor timing, crate routing, and score tracking. The primary effort went into the art and visual design: the factory environment, UI, and overall aesthetic were chosen intentionally to give a lightweight game genuine visual substance.</p>
+          <div class="work-item-pills">
+            <span class="pill art">2D Art</span><span class="pill art">Environment Design</span><span class="pill art">UI Design</span><span class="pill design">Game Design</span><span class="pill design">Unity Scripting</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/factory-flip/title-screen.png" alt="Factory Flip title screen"><div class="gallery-caption">Title screen — pixel art factory backdrop, custom typography</div></div>
+        <div class="gallery-item wide"><img src="assets/factory-flip/gameplay-2.png" alt="Factory Flip gameplay"><div class="gallery-caption">Gameplay — crates dropping from the chute, conveyor belt sorting in action</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PROJECT: GDD 202 — IT'S A SMALL WORLD ══════ -->
+<div class="page" id="page-project-gdd202">
+  <div class="container">
+
+    <div class="project-back" onclick="navigate('classwork')">Back to Classwork</div>
+
+    <div class="project-hero">
+      <img src="assets/gdd202/slide-final-render.png" alt="It's A Small World — Final Render" class="project-hero-img">
+      <p class="section-label">// GDD 202 · Spring 2026 · Solo Project</p>
+      <h1 class="project-title"><em>It's A Small World</em></h1>
+      <p class="project-tagline">A tinkerer's workbench — but the tinkerer is a bug. A full 3D art pipeline project covering reference gathering, moodboarding, modelling, UV unwrapping, PBR texturing, shader work, lighting, and final scene presentation in Unity.</p>
+      <div class="project-meta-row">
+        <div class="project-meta-cell"><span class="key">Course</span><span class="val">GDD 202</span></div>
+        <div class="project-meta-cell"><span class="key">Type</span><span class="val">Solo</span></div>
+        <div class="project-meta-cell"><span class="key">Tools</span><span class="val">Maya · Substance · Unity</span></div>
+        <div class="project-meta-cell"><span class="key">Deliverable</span><span class="val">Full Pipeline Scene</span></div>
+      </div>
+    </div>
+
+    <!-- CONCEPT -->
+    <div class="project-section">
+      <p class="project-section-label">// concept</p>
+      <p class="project-section-title">The Idea</p>
+      <p>The assignment brief called for a "Slice of Life" 3D environment scene — a small, atmospheric location that feels specific, lived-in, and visually intentional. I wanted to create a sort of "tinkerer's workbench" style of scene, but with a twist: the tinkerer is a bug.</p>
+      <p>From that concept I settled on building tools and small creations with bug-inspired modifications — scales, cartilage, discoloration, and organic textures that make familiar objects feel alien and intentional. The mood is warm, cluttered, and slightly otherworldly.</p>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-concept.png" alt="Concept"><div class="gallery-caption">Project concept — tinkerer's workbench with a bug as the craftsman</div></div>
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-moodboard.png" alt="Moodboard"><div class="gallery-caption">Moodboard — workbench references, bug anatomy, lighting inspiration, and character direction</div></div>
+      </div>
+    </div>
+
+    <div class="divider" data-label="// pipeline"></div>
+
+    <!-- MODELLING -->
+    <div class="project-section">
+      <p class="project-section-label">// step 01 · modelling</p>
+      <p class="project-section-title">4 Original Assets in Maya</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Hero Asset + 3 Supporting Assets</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>Four original assets were modelled from scratch in Maya, each serving a specific role in the scene hierarchy:</p>
+          <ul>
+            <li><strong style="color:var(--text);">Lantern Bug Lamp</strong> — hero asset, the focal point of the scene</li>
+            <li><strong style="color:var(--text);">Mandible Wrench</strong> — background asset, bug-jaw-inspired hand tool</li>
+            <li><strong style="color:var(--text);">Battery Core</strong> — background asset, organic-meets-mechanical power cell</li>
+            <li><strong style="color:var(--text);">Workbench</strong> — world asset, grounds the scene and provides context</li>
+          </ul>
+          <div class="work-item-pills">
+            <span class="pill art">Maya</span><span class="pill art">Hard Surface</span><span class="pill art">Organic Forms</span><span class="pill design">Asset Planning</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-1" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-modelling.png" alt="Modelling process"><div class="gallery-caption">All 4 assets modelled in Maya — hero lamp (1), workbench (2), mandible wrench (3), battery core (4)</div></div>
+      </div>
+    </div>
+
+    <!-- UV + TEXTURING -->
+    <div class="project-section">
+      <p class="project-section-label">// step 02 · UV unwrapping & texturing</p>
+      <p class="project-section-title">UV Maps & Substance Painter</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Per-Component UV Unwrap → PBR Texturing</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>Each component of the hero asset was UV unwrapped separately in Maya, with clean seam placement and minimal distortion. The full set was then textured in Substance Painter using a PBR Metal-Roughness workflow — layering rust patterns, AO bakes, scale textures, and organic surface detail.</p>
+          <p>One notable technique: the lamp bulb texture uses Substance Painter's PBR Metal-Roughness Blending <em style="color:var(--text);">with Alpha</em> to achieve a translucent glass appearance — rather than a standard opaque surface.</p>
+          <div class="work-item-pills">
+            <span class="pill art">UV Mapping</span><span class="pill art">Substance Painter</span><span class="pill art">PBR Pipeline</span><span class="pill art">Alpha Blending</span><span class="pill art">AO Baking</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-uvs.png" alt="UV maps"><div class="gallery-caption">Hero asset UV layout — per-part unwrap across all lamp components</div></div>
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-textures.png" alt="Texture maps"><div class="gallery-caption">Hero asset texture maps — translucent bulb, wing scales, arm rust, cage patina</div></div>
+      </div>
+    </div>
+
+    <!-- UNITY + SHADERS -->
+    <div class="project-section">
+      <p class="project-section-label">// step 03 · unity integration & shaders</p>
+      <p class="project-section-title">Engine Import & Custom Shader Graphs</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">3 Shader Graphs — Standard, Wobble, Transparent Emission</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>All four assets were imported into Unity with their full PBR material sets. Three custom Shader Graphs were created to bring the scene to life beyond standard materials:</p>
+          <ul>
+            <li><strong style="color:var(--text);">Custom Standard Shader</strong> — base shader modified to receive the Substance texture maps correctly</li>
+            <li><strong style="color:var(--text);">Wobbling Distortion Shader</strong> — vertex displacement shader creating an organic wobble effect on the Battery Core, driven by time-based noise</li>
+            <li><strong style="color:var(--text);">Transparent + Emission Variant</strong> — variation of the wobble graph adding transparency and emissive glow for the lamp bulb</li>
+          </ul>
+          <div class="work-item-pills">
+            <span class="pill design">Shader Graph</span><span class="pill design">Vertex Displacement</span><span class="pill design">Emission</span><span class="pill design">Alpha Transparency</span><span class="pill art">Unity Import</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-imports.png" alt="Unity imports"><div class="gallery-caption">Initial Unity imports — all 4 assets with PBR materials applied</div></div>
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-shaders.png" alt="Shader graphs"><div class="gallery-caption">Custom Shader Graphs — standard, wobble distortion, and transparent emission variants</div></div>
+      </div>
+    </div>
+
+    <!-- FINAL RENDER -->
+    <div class="project-section">
+      <p class="project-section-label">// step 04 · lighting & final render</p>
+      <p class="project-section-title">Scene Assembly & Final Render</p>
+      <div class="work-item">
+        <div class="work-item-header">
+          <div><p class="work-item-title">Dressed Scene with Lighting & Supporting Assets</p></div>
+        </div>
+        <div class="work-item-body">
+          <p>The final scene was assembled in Unity with point lighting sourced from the lamp itself as the key light, supplemented by supporting prop assets to fill the workbench surface. The cave-wall background grounds the scene spatially and adds depth. All lighting, asset placement, and scene composition were designed to reinforce the warm, secretive atmosphere of a bug's hidden workshop.</p>
+          <div class="work-item-pills">
+            <span class="pill art">Scene Composition</span><span class="pill art">Lighting Design</span><span class="pill design">Art Direction</span><span class="pill design">Unity Rendering</span>
+          </div>
+        </div>
+      </div>
+      <div class="gallery cols-2" style="margin-top:1.5rem;">
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-rendering.png" alt="Rendering process"><div class="gallery-caption">Rendering process — lighting setup, asset placement, and composition work</div></div>
+        <div class="gallery-item wide"><img src="assets/gdd202/slide-final-render.png" alt="Final render"><div class="gallery-caption">Final render — complete scene with atmospheric lighting and all assets dressed</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>© 2026 <span class="flink" onclick="navigate('home')">Phill Simpson</span> · Game Design & Development</p>
+  <p>Built from scratch · Hosted on <a href="https://pages.github.com" target="_blank">GitHub Pages</a></p>
+</footer>
+
+<script>
+  function navigate(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + page);
+    if (target) target.classList.add('active');
+    document.querySelectorAll('nav a[data-page]').forEach(a => {
+      const isActive = a.dataset.page === page
+        || (page.startsWith('project-') && a.dataset.page === 'games')
+        || (page === 'project-gdd202' && a.dataset.page === 'classwork');
+      a.classList.toggle('active', isActive);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function filterArt(type, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.art-item').forEach(item => {
+      item.style.display = (type === 'all' || item.dataset.type === type) ? 'block' : 'none';
+    });
+  }
+
+  function handleFormSubmit(btn) {
+    btn.textContent = '✓ Sent (wire up Formspree first!)';
+    btn.style.background = 'var(--teal)';
+    btn.disabled = true;
+  }
+
+  window.addEventListener('scroll', () => {
+    const bar = document.getElementById('scrollProgress');
+    if (!bar) return;
+    const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+    bar.style.width = scrolled + '%';
+  });
+
+  navigate('home');
+</script>
+</body>
+</html>
